@@ -1,0 +1,6 @@
+{
+  "name": "QR Studio",
+  "description": "Precision QR payload encoding, WCAG contrast verification, and styling studio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
