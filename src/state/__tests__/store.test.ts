@@ -26,6 +26,7 @@ describe('QRStore & PRESETS', () => {
         label: '',
         sublabel: '',
         fontFamily: 'sans',
+        textSize: 'md',
         frameBgColor: '#FFFFFF',
         textColor: '#0F172A',
       },
@@ -144,11 +145,37 @@ describe('QRStore & PRESETS', () => {
     expect(received).toHaveLength(2);
   });
 
-  it('exports top-level frozen PRESETS with all four presets at exportSize 1024', () => {
+  it('exports deeply frozen PRESETS with all four presets at exportSize 1024', () => {
     expect(Object.isFrozen(PRESETS)).toBe(true);
-    expect(PRESETS.menu.exportSize).toBe(1024);
-    expect(PRESETS.wifi.exportSize).toBe(1024);
-    expect(PRESETS.website.exportSize).toBe(1024);
-    expect(PRESETS.vcard.exportSize).toBe(1024);
+    for (const preset of [PRESETS.menu, PRESETS.wifi, PRESETS.website, PRESETS.vcard]) {
+      expect(preset.exportSize).toBe(1024);
+      expect(Object.isFrozen(preset)).toBe(true);
+      expect(Object.isFrozen(preset.payload)).toBe(true);
+      expect(Object.isFrozen(preset.style)).toBe(true);
+      expect(Object.isFrozen(preset.frame)).toBe(true);
+    }
+  });
+
+  it('skips listeners unsubscribed mid-flush by an earlier listener', () => {
+    const frameQueue: Array<FrameRequestCallback> = [];
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback): number => {
+      frameQueue.push(cb);
+      return frameQueue.length;
+    });
+
+    const instance = new QRStore();
+    let secondCalled = false;
+    let unsubSecond: () => void = () => {};
+
+    instance.subscribe(() => {
+      unsubSecond();
+    });
+    unsubSecond = instance.subscribe(() => {
+      secondCalled = true;
+    });
+
+    instance.setExportSize(512);
+    frameQueue[0]?.(16);
+    expect(secondCalled).toBe(false);
   });
 });

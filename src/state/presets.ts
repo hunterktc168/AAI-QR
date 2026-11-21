@@ -7,8 +7,15 @@ export interface QRPresets {
   readonly vcard: QRProjectState;
 }
 
+function freezePreset(preset: QRProjectState): QRProjectState {
+  Object.freeze(preset.payload);
+  Object.freeze(preset.style);
+  Object.freeze(preset.frame);
+  return Object.freeze(preset);
+}
+
 export const PRESETS: QRPresets = Object.freeze<QRPresets>({
-  menu: {
+  menu: freezePreset({
     payload: {
       category: 'url',
       url: 'https://example.com/menu',
@@ -26,12 +33,13 @@ export const PRESETS: QRPresets = Object.freeze<QRPresets>({
       label: 'SCAN FOR MENU',
       sublabel: 'View full food & drink menu',
       fontFamily: 'sans',
+      textSize: 'lg',
       frameBgColor: '#1E293B',
       textColor: '#FFFBEB',
     },
     exportSize: 1024,
-  },
-  wifi: {
+  }),
+  wifi: freezePreset({
     payload: {
       category: 'wifi',
       ssid: 'GuestWiFi',
@@ -52,12 +60,13 @@ export const PRESETS: QRPresets = Object.freeze<QRPresets>({
       label: 'GUEST WI-FI',
       sublabel: 'Scan to join automatically',
       fontFamily: 'sans',
+      textSize: 'md',
       frameBgColor: '#1D4ED8',
       textColor: '#FFFFFF',
     },
     exportSize: 1024,
-  },
-  website: {
+  }),
+  website: freezePreset({
     payload: {
       category: 'url',
       url: 'https://example.com',
@@ -75,12 +84,13 @@ export const PRESETS: QRPresets = Object.freeze<QRPresets>({
       label: '',
       sublabel: '',
       fontFamily: 'sans',
+      textSize: 'md',
       frameBgColor: '#FFFFFF',
       textColor: '#0F172A',
     },
     exportSize: 1024,
-  },
-  vcard: {
+  }),
+  vcard: freezePreset({
     payload: {
       category: 'vcard',
       firstName: 'Jane',
@@ -105,9 +115,10 @@ export const PRESETS: QRPresets = Object.freeze<QRPresets>({
       label: 'SAVE CONTACT',
       sublabel: 'Scan to add to contacts',
       fontFamily: 'sans',
+      textSize: 'md',
       frameBgColor: '#065F46',
       textColor: '#FFFFFF',
     },
     exportSize: 1024,
-  },
+  }),
 });

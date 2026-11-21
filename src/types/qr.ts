@@ -45,6 +45,8 @@ export type ErrorCorrectionLevel = 'L' | 'M' | 'Q' | 'H';
 
 export type FrameTemplate = 'none' | 'bottom-banner' | 'top-badge' | 'card-border';
 
+export type TextSize = 'sm' | 'md' | 'lg';
+
 export interface QRStyleConfig {
   fgColor: string;
   bgColor: string;
@@ -59,6 +61,7 @@ export interface QRFrameConfig {
   label: string;
   sublabel: string;
   fontFamily: 'sans' | 'serif' | 'mono';
+  textSize: TextSize;
   frameBgColor: string;
   textColor: string;
 }

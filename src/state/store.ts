@@ -30,6 +30,7 @@ function createBootState(): QRProjectState {
       label: '',
       sublabel: '',
       fontFamily: 'sans',
+      textSize: 'md',
       frameBgColor: '#FFFFFF',
       textColor: '#0F172A',
     },
@@ -206,8 +207,11 @@ export class QRStore {
 
     const flush = (): void => {
       this.pendingNotify = false;
-      for (const listener of this.listeners) {
-        listener(this.getState());
+      const snapshot = [...this.listeners];
+      for (const listener of snapshot) {
+        if (this.listeners.has(listener)) {
+          listener(this.getState());
+        }
       }
     };
 
