@@ -26,7 +26,7 @@ interface PreviewStageProps {
 export default function PreviewStage({ onOpenHtmlModal }: PreviewStageProps) {
   const state = useStore();
   const stageRef = useRef<HTMLDivElement | null>(null);
-  const { svg, error } = useDebouncedCompose(state, PREVIEW_WIDTH, 80);
+  const { svg, isComposing, error } = useDebouncedCompose(state, PREVIEW_WIDTH, 80);
   const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -63,10 +63,10 @@ export default function PreviewStage({ onOpenHtmlModal }: PreviewStageProps) {
   return (
     <aside
       aria-labelledby="preview-stage-heading"
-      className="lg:sticky lg:top-20 rounded-xl border border-slate-800 bg-[#111827] p-5 sm:p-6 space-y-5"
+      className="lg:sticky lg:top-20 rounded-xl border border-zinc-800 bg-[#121215] p-4 sm:p-6 space-y-6"
     >
-      <div className="flex items-center justify-between gap-3">
-        <h2 id="preview-stage-heading" className="text-base font-semibold text-slate-100">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h2 id="preview-stage-heading" className="text-lg sm:text-xl font-semibold tracking-tight text-zinc-50">
           Live Preview
         </h2>
 
@@ -74,42 +74,52 @@ export default function PreviewStage({ onOpenHtmlModal }: PreviewStageProps) {
           role="status"
           aria-live="polite"
           data-contrast-badge="true"
-          className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium ${
-            isGoodContrast
-              ? 'border-emerald-500/40 bg-emerald-600/20 text-emerald-300'
-              : 'border-amber-500/40 bg-amber-600/20 text-amber-300'
+          className={`inline-flex items-center gap-1.5 text-sm font-medium ${
+            isGoodContrast ? 'text-[#10B981]' : 'text-amber-400'
           }`}
         >
           {isGoodContrast ? (
-            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <CheckCircle2 className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
           ) : (
-            <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <AlertTriangle className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
           )}
           <span>{isGoodContrast ? 'Good' : 'Low Contrast'}</span>
-          <span className="font-mono tabular-nums opacity-85">
+          <span aria-hidden="true" className="text-zinc-600">
+            ·
+          </span>
+          <span className="font-mono tabular-nums text-zinc-200">
             {contrastRatio.toFixed(1)}:1
           </span>
         </div>
       </div>
 
-      {/* SVG Mount Surface */}
-      <div className="flex items-center justify-center rounded-xl border border-slate-800 bg-[#0B0F17] p-6 min-h-[344px]">
-        <div
-          ref={stageRef}
-          aria-label="Generated QR code preview"
-          className="flex items-center justify-center w-full max-w-[320px] aspect-square"
-        />
+      {/* SVG Mount Surface with geometry-matched skeleton */}
+      <div className="flex items-center justify-center rounded-lg border border-zinc-800 bg-[#09090B] p-4 sm:p-6 min-h-[336px]">
+        {svg === null ? (
+          <div
+            aria-label="Loading QR preview"
+            className="w-full max-w-[320px] aspect-square rounded-lg border border-zinc-800 bg-[#18181B] animate-pulse"
+          />
+        ) : (
+          <div
+            ref={stageRef}
+            aria-label="Generated QR code preview"
+            className={`flex items-center justify-center w-full max-w-[320px] aspect-square transition-opacity duration-150 ${
+              isComposing ? 'opacity-75' : 'opacity-100'
+            }`}
+          />
+        )}
       </div>
 
       {displayError !== null && (
-        <p role="alert" className="text-xs text-amber-400">
+        <p role="alert" className="text-sm text-amber-400">
           {displayError}
         </p>
       )}
 
       {/* Resolution Selector */}
       <div className="space-y-2">
-        <span className="block text-xs font-medium text-slate-300">
+        <span className="block text-sm sm:text-xs font-medium text-zinc-300">
           Export Resolution
         </span>
         <div className="grid grid-cols-3 gap-2">
@@ -123,10 +133,10 @@ export default function PreviewStage({ onOpenHtmlModal }: PreviewStageProps) {
                 aria-disabled={isEmpty ? 'true' : 'false'}
                 aria-pressed={active}
                 onClick={() => store.setExportSize(size)}
-                className={`rounded-md border px-3 py-2 text-xs font-mono tabular-nums font-medium transition-colors whitespace-nowrap cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+                className={`min-h-11 sm:min-h-9 rounded-lg border px-3 py-2 text-sm sm:text-xs font-mono tabular-nums font-medium transition-colors duration-150 active:scale-[0.98] whitespace-nowrap cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] ${
                   active
-                    ? 'border-sky-400/50 bg-sky-500/15 text-sky-300'
-                    : 'border-slate-800 bg-[#0B0F17] text-slate-300 hover:border-slate-700'
+                    ? 'border-[#3B82F6]/60 bg-[#3B82F6]/15 text-blue-200'
+                    : 'border-zinc-800 bg-[#09090B] text-zinc-300 hover:border-zinc-700 hover:bg-[#18181B] hover:text-zinc-100'
                 }`}
               >
                 {size}px
@@ -137,15 +147,15 @@ export default function PreviewStage({ onOpenHtmlModal }: PreviewStageProps) {
       </div>
 
       {/* Export Actions */}
-      <div className="grid grid-cols-2 gap-2.5 pt-1">
+      <div className="grid grid-cols-2 gap-2 pt-2">
         <button
           type="button"
           disabled={isEmpty}
           aria-disabled={isEmpty ? 'true' : 'false'}
           onClick={() => void runExport(downloadPNG)}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-sky-500 px-3.5 py-2.5 text-xs font-semibold text-slate-950 hover:bg-sky-400 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 transition-colors whitespace-nowrap cursor-pointer"
+          className="inline-flex min-h-11 sm:min-h-10 items-center justify-center gap-2 rounded-lg bg-[#3B82F6] px-4 py-2 text-sm sm:text-xs font-semibold text-zinc-950 hover:bg-blue-400 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 transition-colors duration-150 whitespace-nowrap cursor-pointer"
         >
-          <Download className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <Download className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
           <span>PNG</span>
         </button>
 
@@ -154,9 +164,9 @@ export default function PreviewStage({ onOpenHtmlModal }: PreviewStageProps) {
           disabled={isEmpty}
           aria-disabled={isEmpty ? 'true' : 'false'}
           onClick={() => void runExport(downloadJPG)}
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3.5 py-2.5 text-xs font-semibold text-slate-100 hover:border-slate-600 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 transition-colors whitespace-nowrap cursor-pointer"
+          className="inline-flex min-h-11 sm:min-h-10 items-center justify-center gap-2 rounded-lg border border-zinc-800 bg-[#18181B] px-4 py-2 text-sm sm:text-xs font-semibold text-zinc-100 hover:border-zinc-700 hover:bg-zinc-800 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] transition-colors duration-150 whitespace-nowrap cursor-pointer"
         >
-          <ImageIcon className="h-3.5 w-3.5 text-sky-400 shrink-0" aria-hidden="true" />
+          <ImageIcon className="h-4 w-4 text-zinc-400 shrink-0" strokeWidth={1.5} aria-hidden="true" />
           <span>JPG</span>
         </button>
 
@@ -165,9 +175,9 @@ export default function PreviewStage({ onOpenHtmlModal }: PreviewStageProps) {
           disabled={isEmpty}
           aria-disabled={isEmpty ? 'true' : 'false'}
           onClick={() => void runExport(downloadSVG)}
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3.5 py-2.5 text-xs font-semibold text-slate-100 hover:border-slate-600 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 transition-colors whitespace-nowrap cursor-pointer"
+          className="inline-flex min-h-11 sm:min-h-10 items-center justify-center gap-2 rounded-lg border border-zinc-800 bg-[#18181B] px-4 py-2 text-sm sm:text-xs font-semibold text-zinc-100 hover:border-zinc-700 hover:bg-zinc-800 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] transition-colors duration-150 whitespace-nowrap cursor-pointer"
         >
-          <FileCode2 className="h-3.5 w-3.5 text-sky-400 shrink-0" aria-hidden="true" />
+          <FileCode2 className="h-4 w-4 text-zinc-400 shrink-0" strokeWidth={1.5} aria-hidden="true" />
           <span>SVG</span>
         </button>
 
@@ -176,9 +186,9 @@ export default function PreviewStage({ onOpenHtmlModal }: PreviewStageProps) {
           disabled={isEmpty}
           aria-disabled={isEmpty ? 'true' : 'false'}
           onClick={onOpenHtmlModal}
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3.5 py-2.5 text-xs font-semibold text-slate-100 hover:border-slate-600 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 transition-colors whitespace-nowrap cursor-pointer"
+          className="inline-flex min-h-11 sm:min-h-10 items-center justify-center gap-2 rounded-lg border border-zinc-800 bg-[#18181B] px-4 py-2 text-sm sm:text-xs font-semibold text-zinc-100 hover:border-zinc-700 hover:bg-zinc-800 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] transition-colors duration-150 whitespace-nowrap cursor-pointer"
         >
-          <Code2 className="h-3.5 w-3.5 text-sky-400 shrink-0" aria-hidden="true" />
+          <Code2 className="h-4 w-4 text-zinc-400 shrink-0" strokeWidth={1.5} aria-hidden="true" />
           <span>HTML</span>
         </button>
       </div>

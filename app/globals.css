@@ -7,16 +7,31 @@
 }
 
 @layer utilities {
-  .bg-studio-grid {
-    background-color: #0B0F17;
-    background-image: radial-gradient(rgba(148, 163, 184, 0.14) 1px, transparent 1px);
-    background-size: 20px 20px;
+  .bg-studio-canvas {
+    background-color: #09090B;
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #334155 #0B0F17;
+  scrollbar-color: #27272A #09090B;
 }
 
 *::-webkit-scrollbar {
@@ -25,20 +40,20 @@
 }
 
 *::-webkit-scrollbar-track {
-  background: #0B0F17;
+  background: #09090B;
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: #334155;
+  background-color: #27272A;
   border-radius: 9999px;
-  border: 2px solid #0B0F17;
+  border: 2px solid #09090B;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background-color: #475569;
+  background-color: #3F3F46;
 }
 
 dialog::backdrop {
-  background: rgba(2, 6, 23, 0.78);
+  background: rgba(9, 9, 11, 0.8);
   backdrop-filter: blur(4px);
 }

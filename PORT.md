@@ -33,6 +33,7 @@ This document maps every React sandbox component in `app/components/` to its tar
 - Category tabs → `[role="tab"][data-category]` click handlers switch active category via `store.loadPreset({ ...store.getState(), payload: defaultPayloadFor(cat) })`; sync `aria-selected` and toggle `hidden` on matching `[role="tabpanel"]` referenced by `aria-controls`
 - Field inputs → delegate or bind `input` / `change` events on `[data-field]` elements scoped to `root` to `store.updatePayload({ [field]: value })`, reading values back from `store.getState().payload`
 - Wi-Fi password toggle → local boolean in `mount` closure toggling `input.type` (`password` ↔ `text`), `aria-pressed`, and `Eye` / `EyeOff` icon from `lucide`
+- Entrance animation → replace `motion.section` (`motion/react`) with a lightweight CSS fade/rise class on mount (`prefers-reduced-motion` aware)
 - Estimated port time: ~40 min
 
 ---
@@ -47,6 +48,7 @@ This document maps every React sandbox component in `app/components/` to its tar
 - Curated swatches → `[data-swatch]` click sets `fgColor` + `bgColor`; sync `aria-pressed` case-insensitively on state updates
 - Dot shape, corner shape, EC selectors → `[data-dot]`, `[data-corner]`, `[data-ec]` click handlers call `store.updateStyle(...)`; sync `aria-pressed`
 - Logo upload → `<input type="file">` change validates `file.size <= 1_048_576` (inline error on reject), resizes via `createImageBitmap` → `<canvas>` (`<= 256px` long edge) → `toDataURL('image/png')` → `store.updateStyle({ logoDataUrl })`; clear button sets `{ logoDataUrl: null }`
+- Entrance animation → replace `motion.section` (`motion/react`) with a staggered CSS fade/rise class on mount (`prefers-reduced-motion` aware)
 - Estimated port time: ~45 min
 
 ---
@@ -62,6 +64,7 @@ This document maps every React sandbox component in `app/components/` to its tar
 - Font family buttons → `[data-font]` click calls `store.updateFrame({ fontFamily })` and syncs `aria-pressed`
 - `textSize` segmented control — three `addEventListener('click')` handlers in `mount()`, `aria-pressed` toggle, `store.updateFrame({ textSize })`. ~10 min.
 - Frame bg & text color inputs → identical `/^#?[0-9a-fA-F]{6}$/` validation + lowercase `#rrggbb` normalization before calling `store.updateFrame(...)`
+- Entrance animation → replace `motion.section` (`motion/react`) with a staggered CSS fade/rise class on mount (`prefers-reduced-motion` aware)
 - Estimated port time: ~40 min
 
 ---
@@ -100,8 +103,8 @@ This document maps every React sandbox component in `app/components/` to its tar
 
 **Port notes:**
 - `useStore()` → `store.subscribe(syncBar)` in `mount`, return `unsubscribe` in teardown
-- Resolution buttons (`512`, `1024`, `2048`) → `store.setExportSize(n)` with `aria-pressed` sync
-- Export buttons (`PNG`, `JPG`, `SVG`) → bind click listeners to `downloadPNG` / `downloadJPG` / `downloadSVG(store.getState())`
-- Empty-payload guard → sync `.disabled` and `aria-disabled` on all bar controls when `serializePayload(state.payload) === ''`
+- Collapsed bar (`min-h-11`, 44px touch targets) → resolution/options sheet toggle (`aria-expanded`, `aria-controls="mobile-export-sheet"`), quick `SVG` and primary `PNG` export buttons
+- Expandable bottom sheet → toggles `hidden` / CSS slide transition on `[data-mobile-sheet]` containing resolution buttons (`512`, `1024`, `2048`) calling `store.setExportSize(n)` plus `JPG`, `SVG`, and `HTML` (`exportModal.open()`) buttons
+- Empty-payload guard → sync `.disabled` and `aria-disabled` on export/resolution controls when `serializePayload(state.payload) === ''`
 - Responsive visibility → `lg:hidden` Tailwind utility on `root` preserved unchanged
-- Estimated port time: ~15 min
+- Estimated port time: ~20 min

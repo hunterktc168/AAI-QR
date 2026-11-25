@@ -42,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body
         suppressHydrationWarning
-        className="min-h-screen bg-studio-grid font-sans text-slate-100 antialiased selection:bg-sky-500/30 selection:text-sky-100"
+        className="min-h-screen bg-studio-canvas font-sans text-zinc-100 antialiased selection:bg-[#3B82F6]/30 selection:text-blue-100"
       >
         {children}
       </body>

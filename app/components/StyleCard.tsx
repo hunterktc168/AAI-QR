@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { motion } from 'motion/react';
 import { ImagePlus, Trash2 } from 'lucide-react';
 import { store } from '@/src/state/store';
 import type { CornerStyle, DotStyle, ErrorCorrectionLevel } from '@/src/types/qr';
@@ -87,7 +88,7 @@ function HexInputControl({ id, label, value, onCommit }: HexInputControlProps) {
 
   return (
     <div>
-      <label htmlFor={id} className="block text-xs font-medium text-slate-300 mb-1.5">
+      <label htmlFor={id} className="block text-sm sm:text-xs font-medium text-zinc-300 mb-2">
         {label}
       </label>
       <div className="flex items-center gap-2">
@@ -100,7 +101,7 @@ function HexInputControl({ id, label, value, onCommit }: HexInputControlProps) {
             setDraft({ baseProp: value, text: next });
             onCommit(next);
           }}
-          className="h-9 w-10 shrink-0 cursor-pointer rounded-md border border-slate-700 bg-[#0B0F17] p-0.5"
+          className="h-11 sm:h-10 w-11 shrink-0 cursor-pointer rounded-lg border border-zinc-800 bg-[#09090B] p-1 hover:border-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] transition-colors duration-150"
         />
         <input
           id={id}
@@ -110,16 +111,16 @@ function HexInputControl({ id, label, value, onCommit }: HexInputControlProps) {
           placeholder="#0f172a"
           spellCheck={false}
           aria-invalid={isInvalid}
-          className={`w-full rounded-lg border bg-[#0B0F17] px-3 py-2 font-mono text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 transition-colors ${
+          className={`w-full min-h-11 sm:min-h-10 rounded-lg border bg-[#09090B] px-3 py-2 font-mono tabular-nums text-base sm:text-sm text-zinc-100 placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 transition-colors duration-150 ${
             isInvalid
-              ? 'border-amber-500/70 focus:border-amber-400 focus:ring-amber-400/50'
-              : 'border-slate-800 focus:border-sky-400 focus:ring-sky-400/50'
+              ? 'border-amber-500/80 focus-visible:border-amber-400 focus-visible:ring-amber-400/30'
+              : 'border-zinc-800 hover:border-zinc-700 focus-visible:border-[#3B82F6] focus-visible:ring-[#3B82F6]/30'
           }`}
         />
       </div>
       {isInvalid && (
-        <p role="alert" className="mt-1 text-xs text-amber-400">
-          Enter a 6-digit hex color (e.g. #0f172a).
+        <p role="alert" className="mt-2 text-xs text-amber-400">
+          Enter a 6-digit hex color (e.g. <span className="font-mono">#0f172a</span>).
         </p>
       )}
     </div>
@@ -197,25 +198,28 @@ export default function StyleCard() {
   };
 
   return (
-    <section
+    <motion.section
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
       aria-labelledby="style-card-heading"
-      className="rounded-xl border border-slate-800 bg-[#111827] p-5 sm:p-6 space-y-6"
+      className="rounded-xl border border-zinc-800 bg-[#121215] p-4 sm:p-6 space-y-6"
     >
-      <div>
-        <h2 id="style-card-heading" className="text-base font-semibold text-slate-100">
+      <div className="space-y-1">
+        <h2 id="style-card-heading" className="text-lg sm:text-xl font-semibold tracking-tight text-zinc-50">
           Style &amp; Colors
         </h2>
-        <p className="text-xs text-slate-400 mt-0.5">
+        <p className="text-sm leading-relaxed text-zinc-400">
           Palette contrast, module geometry, error correction, and center logo
         </p>
       </div>
 
       {/* Curated high-contrast swatches */}
       <div className="space-y-2">
-        <span className="block text-xs font-medium text-slate-300">
-          High-Contrast Swatches (7:1+)
+        <span className="block text-sm sm:text-xs font-medium text-zinc-300">
+          High-Contrast Swatches (<span className="font-mono tabular-nums">7:1+</span>)
         </span>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {CURATED_SWATCHES.map((swatch) => {
             const active =
               style.fgColor.toLowerCase() === swatch.fg &&
@@ -228,25 +232,25 @@ export default function StyleCard() {
                 onClick={() =>
                   store.updateStyle({ fgColor: swatch.fg, bgColor: swatch.bg })
                 }
-                className={`flex items-center gap-2.5 rounded-lg border px-2.5 py-2 text-left text-xs font-medium transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+                className={`flex min-h-11 sm:min-h-9 items-center gap-2.5 rounded-lg border px-3 py-2 text-left text-sm sm:text-xs font-medium transition-colors duration-150 active:scale-[0.98] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] ${
                   active
-                    ? 'border-sky-400/60 bg-sky-500/10 text-sky-200'
-                    : 'border-slate-800 bg-[#0B0F17] text-slate-300 hover:border-slate-700'
+                    ? 'border-[#3B82F6]/60 bg-[#3B82F6]/15 text-blue-100'
+                    : 'border-zinc-800 bg-[#09090B] text-zinc-300 hover:border-zinc-700 hover:bg-[#18181B] hover:text-zinc-100'
                 }`}
               >
                 <span className="flex items-center shrink-0">
                   <span
                     aria-hidden="true"
-                    className="h-4 w-4 rounded-l border border-slate-700"
+                    className="h-4 w-4 rounded-l border border-zinc-700"
                     style={{ backgroundColor: swatch.fg }}
                   />
                   <span
                     aria-hidden="true"
-                    className="h-4 w-4 rounded-r border border-l-0 border-slate-700"
+                    className="h-4 w-4 rounded-r border border-l-0 border-zinc-700"
                     style={{ backgroundColor: swatch.bg }}
                   />
                 </span>
-                <span className="truncate">{swatch.label}</span>
+                <span className="whitespace-nowrap truncate">{swatch.label}</span>
               </button>
             );
           })}
@@ -271,10 +275,10 @@ export default function StyleCard() {
 
       {/* Dot Style */}
       <div className="space-y-2">
-        <span className="block text-xs font-medium text-slate-300">
+        <span className="block text-sm sm:text-xs font-medium text-zinc-300">
           Module Shape
         </span>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {DOT_OPTIONS.map((opt) => {
             const active = style.dotStyle === opt.value;
             return (
@@ -283,10 +287,10 @@ export default function StyleCard() {
                 type="button"
                 aria-pressed={active}
                 onClick={() => store.updateStyle({ dotStyle: opt.value })}
-                className={`rounded-md border px-2.5 py-2 text-xs font-medium transition-colors whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+                className={`min-h-11 sm:min-h-9 rounded-lg border px-3 py-2 text-sm sm:text-xs font-medium transition-colors duration-150 active:scale-[0.98] whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] ${
                   active
-                    ? 'border-sky-400/50 bg-sky-500/15 text-sky-300'
-                    : 'border-slate-800 bg-[#0B0F17] text-slate-300 hover:border-slate-700'
+                    ? 'border-[#3B82F6]/60 bg-[#3B82F6]/15 text-blue-200'
+                    : 'border-zinc-800 bg-[#09090B] text-zinc-300 hover:border-zinc-700 hover:bg-[#18181B] hover:text-zinc-100'
                 }`}
               >
                 {opt.label}
@@ -296,83 +300,88 @@ export default function StyleCard() {
         </div>
       </div>
 
-      {/* Corner Style & Error Correction */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <span className="block text-xs font-medium text-slate-300">
-            Corner Markers
-          </span>
-          <div className="grid grid-cols-3 gap-1.5">
-            {CORNER_OPTIONS.map((opt) => {
-              const active = style.cornerStyle === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => store.updateStyle({ cornerStyle: opt.value })}
-                  className={`rounded-md border px-2 py-2 text-xs font-medium transition-colors whitespace-nowrap truncate cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
-                    active
-                      ? 'border-sky-400/50 bg-sky-500/15 text-sky-300'
-                      : 'border-slate-800 bg-[#0B0F17] text-slate-300 hover:border-slate-700'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
+      {/* Corner Style */}
+      <div className="space-y-2">
+        <span className="block text-sm sm:text-xs font-medium text-zinc-300">
+          Corner Markers
+        </span>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {CORNER_OPTIONS.map((opt) => {
+            const active = style.cornerStyle === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                aria-pressed={active}
+                onClick={() => store.updateStyle({ cornerStyle: opt.value })}
+                className={`min-h-11 sm:min-h-9 rounded-lg border px-3 py-2 text-sm sm:text-xs font-medium transition-colors duration-150 active:scale-[0.98] whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] ${
+                  active
+                    ? 'border-[#3B82F6]/60 bg-[#3B82F6]/15 text-blue-200'
+                    : 'border-zinc-800 bg-[#09090B] text-zinc-300 hover:border-zinc-700 hover:bg-[#18181B] hover:text-zinc-100'
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
         </div>
+      </div>
 
-        <div className="space-y-2">
-          <span className="block text-xs font-medium text-slate-300">
-            Error Correction
-          </span>
-          <div className="grid grid-cols-4 gap-1.5">
-            {EC_OPTIONS.map((opt) => {
-              const active = style.errorCorrection === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => store.updateStyle({ errorCorrection: opt.value })}
-                  className={`rounded-md border px-2 py-2 text-xs font-medium font-mono tabular-nums transition-colors whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
-                    active
-                      ? 'border-sky-400/50 bg-sky-500/15 text-sky-300'
-                      : 'border-slate-800 bg-[#0B0F17] text-slate-300 hover:border-slate-700'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
+      {/* Error Correction */}
+      <div className="space-y-2">
+        <span className="block text-sm sm:text-xs font-medium text-zinc-300">
+          Error Correction
+        </span>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {EC_OPTIONS.map((opt) => {
+            const active = style.errorCorrection === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                aria-pressed={active}
+                onClick={() => store.updateStyle({ errorCorrection: opt.value })}
+                className={`min-h-11 sm:min-h-9 rounded-lg border px-3 py-2 text-sm sm:text-xs font-medium font-mono tabular-nums transition-colors duration-150 active:scale-[0.98] whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] ${
+                  active
+                    ? 'border-[#3B82F6]/60 bg-[#3B82F6]/15 text-blue-200'
+                    : 'border-zinc-800 bg-[#09090B] text-zinc-300 hover:border-zinc-700 hover:bg-[#18181B] hover:text-zinc-100'
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Logo Upload */}
-      <div className="space-y-2 border-t border-slate-800 pt-4">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-medium text-slate-300">
-            Center Logo (max 1 MB · resized to 256px)
+      <div className="space-y-3 border-t border-zinc-800 pt-6">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-sm sm:text-xs font-medium text-zinc-300">
+            Center Logo (max <span className="font-mono tabular-nums">1 MB</span> · resized to <span className="font-mono tabular-nums">256px</span>)
           </span>
           {style.logoDataUrl !== null && (
             <button
               type="button"
               onClick={handleClearLogo}
-              className="inline-flex items-center gap-1 text-xs font-medium text-slate-300 hover:text-rose-300 transition-colors cursor-pointer"
+              className="inline-flex min-h-11 sm:min-h-8 items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium text-zinc-300 hover:bg-[#18181B] hover:text-rose-400 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] transition-colors duration-150 cursor-pointer"
             >
-              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+              <Trash2 className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
               <span>Clear logo</span>
             </button>
           )}
         </div>
 
-        <div className="flex items-center gap-3">
-          <label className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-[#0B0F17] px-3.5 py-2 text-xs font-medium text-slate-200 hover:border-slate-600 hover:bg-slate-900 cursor-pointer transition-colors">
-            <ImagePlus className="h-4 w-4 text-sky-400" aria-hidden="true" />
-            <span>{style.logoDataUrl ? 'Replace image' : 'Upload image'}</span>
+        <div className="flex flex-wrap items-center gap-4">
+          <label className="inline-flex min-h-11 sm:min-h-9 items-center gap-2 rounded-lg border border-zinc-800 bg-[#09090B] px-4 py-2 text-sm sm:text-xs font-medium text-zinc-200 hover:border-zinc-700 hover:bg-[#18181B] active:scale-[0.98] focus-within:border-[#3B82F6] focus-within:ring-2 focus-within:ring-[#3B82F6] cursor-pointer transition-colors duration-150">
+            <ImagePlus
+              className="h-5 w-5 sm:h-4 sm:w-4 text-[#3B82F6] shrink-0"
+              strokeWidth={1.5}
+              aria-hidden="true"
+            />
+            <span className="whitespace-nowrap">
+              {style.logoDataUrl ? 'Replace image' : 'Upload image'}
+            </span>
             <input
               ref={fileInputRef}
               type="file"
@@ -392,9 +401,9 @@ export default function StyleCard() {
                 src={style.logoDataUrl}
                 alt="Uploaded center logo"
                 referrerPolicy="no-referrer"
-                className="h-9 w-9 rounded-md border border-slate-700 bg-white object-contain p-0.5"
+                className="h-10 w-10 rounded-md border border-zinc-800 bg-white object-contain p-0.5"
               />
-              <span className="text-xs text-slate-400">Active</span>
+              <span className="text-xs font-medium text-[#10B981]">Active</span>
             </div>
           )}
         </div>
@@ -405,6 +414,6 @@ export default function StyleCard() {
           </p>
         )}
       </div>
-    </section>
+    </motion.section>
   );
 }

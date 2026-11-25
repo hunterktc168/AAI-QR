@@ -115,37 +115,37 @@ export default function ExportModal({ open, onClose }: ExportModalProps) {
           handleClose();
         }
       }}
-      className="m-auto w-full max-w-2xl rounded-xl border border-slate-800 bg-[#111827] p-0 text-slate-100 shadow-2xl"
+      className="m-auto w-[calc(100%-2rem)] max-w-2xl rounded-xl border border-zinc-800 bg-[#121215] p-0 text-zinc-100"
     >
-      <div className="flex items-center justify-between gap-4 border-b border-slate-800 px-6 py-4">
-        <h2 id="export-modal-title" className="text-base font-semibold text-slate-100">
+      <div className="flex items-center justify-between gap-4 border-b border-zinc-800 px-4 sm:px-6 py-4">
+        <h2 id="export-modal-title" className="text-lg font-semibold tracking-tight text-zinc-50">
           HTML Embed Snippet
         </h2>
         <button
           type="button"
           aria-label="Close modal"
           onClick={handleClose}
-          className="rounded-md p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 cursor-pointer"
+          className="inline-flex min-h-11 min-w-11 sm:min-h-8 sm:min-w-8 items-center justify-center rounded-md border border-transparent text-zinc-400 hover:bg-[#18181B] hover:text-zinc-100 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] cursor-pointer transition-colors duration-150"
         >
-          <X className="h-4 w-4" aria-hidden="true" />
+          <X className="h-5 w-5 sm:h-4 sm:w-4" strokeWidth={1.5} aria-hidden="true" />
         </button>
       </div>
 
-      <div className="p-6 space-y-4">
-        <p className="text-xs leading-relaxed text-slate-300 rounded-lg border border-slate-800 bg-[#0B0F17] px-3.5 py-2.5">
+      <div className="p-4 sm:p-6 space-y-4">
+        <p className="text-sm leading-relaxed text-zinc-400">
           Fonts render with the viewer&apos;s system defaults; typography may vary across platforms. App fonts (Plus Jakarta Sans, JetBrains Mono) do not reach exported assets.
         </p>
 
         <pre
           ref={preRef}
-          className="max-h-80 overflow-auto rounded-lg border border-slate-800 bg-[#0B0F17] p-4 font-mono text-xs leading-relaxed text-sky-200 whitespace-pre-wrap break-all"
+          className="max-h-80 overflow-auto rounded-lg border border-zinc-800 bg-[#09090B] p-4 font-mono tabular-nums text-xs leading-relaxed text-zinc-200 whitespace-pre-wrap break-all"
         />
 
-        <div className="flex items-center justify-between gap-4 pt-1">
+        <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
           <span
             aria-live="polite"
-            className={`text-xs font-medium ${
-              copyStatus === 'failed' ? 'text-amber-400' : 'text-emerald-400'
+            className={`text-sm font-medium ${
+              copyStatus === 'failed' ? 'text-amber-400' : 'text-[#10B981]'
             }`}
           >
             {copyStatus === 'copied'
@@ -155,11 +155,11 @@ export default function ExportModal({ open, onClose }: ExportModalProps) {
                 : ''}
           </span>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleClose}
-              className="rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-medium text-slate-200 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 cursor-pointer"
+              className="min-h-11 sm:min-h-9 rounded-lg border border-zinc-800 bg-[#18181B] px-4 py-2 text-sm sm:text-xs font-medium text-zinc-200 hover:border-zinc-700 hover:bg-zinc-800 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] cursor-pointer transition-colors duration-150"
             >
               Close
             </button>
@@ -167,16 +167,16 @@ export default function ExportModal({ open, onClose }: ExportModalProps) {
               type="button"
               disabled={!hasSnippet}
               onClick={() => void handleCopy()}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-sky-500 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-sky-400 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 cursor-pointer"
+              className="inline-flex min-h-11 sm:min-h-9 items-center gap-2 rounded-lg bg-[#3B82F6] px-4 py-2 text-sm sm:text-xs font-semibold text-zinc-950 hover:bg-blue-400 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 cursor-pointer transition-colors duration-150"
             >
               {copyStatus === 'copied' ? (
                 <>
-                  <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                  <Check className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
                   <span>Copied</span>
                 </>
               ) : (
                 <>
-                  <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                  <Copy className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
                   <span>Copy HTML</span>
                 </>
               )}

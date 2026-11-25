@@ -36,7 +36,7 @@ When a required payload field is empty (for Wi-Fi, vCard, Text, Email, or SMS), 
   - **PNG** and **JPG** (canvas-rasterized with opaque frame/QR backgrounds so rounded frames have clean corners).
   - **SVG** (self-contained vector SVG).
   - **HTML Embed Snippet** (modal preview with one-click clipboard copy and OS font note; omits `<figcaption>` when the frame template is `None`).
-- **Responsive Mobile Bar**: Sticky bottom quick-export bar on screens `< 1024px`.
+- **Responsive Mobile Bar**: Sticky bottom quick-export bar with an expandable export/resolution bottom sheet on screens `< 1024px`.
 
 ---
 
@@ -48,7 +48,7 @@ When a required payload field is empty (for Wi-Fi, vCard, Text, Email, or SMS), 
   - **QR Engine & Composition (`src/utils/`)**: `qr-code-styling` for matrix/SVG generation, pure payload serializer (`qrSerializer.ts`), pure contrast calculator (`colorContrast.ts`), async composite SVG builder (`qrComposer.ts`), and multi-format browser exporter (`qrExporter.ts`).
 - **Sandbox UI Layer**:
   - **Next.js 15** (App Router) & **React 19** (`app/`, `app/components/`), designed with a documented port path to framework-free Vanilla TypeScript controllers in [`PORT.md`](./PORT.md).
-  - **Tailwind CSS v4** with `@tailwindcss/postcss` and a dark studio dot-grid theme.
+  - **Tailwind CSS v4** with `@tailwindcss/postcss` and a 3-tier dark neutral theme (`#09090B` / `#121215` / `#18181B`).
   - **Icons**: `lucide-react` (and `lucide` for the vanilla controller target).
 - **Testing & Quality**:
   - **Vitest** (`node` environment) for pure utility and store unit tests.
@@ -61,7 +61,7 @@ When a required payload field is empty (for Wi-Fi, vCard, Text, Email, or SMS), 
 ```text
 ├── app/
 │   ├── components/          # Sandbox React UI cards, preview stage, modal & hooks
-│   ├── globals.css          # Tailwind v4 theme tokens & dot-grid background
+│   ├── globals.css          # Tailwind v4 theme tokens & base styles
 │   ├── layout.tsx           # Root layout & UI fonts
 │   └── page.tsx             # Studio workspace shell
 ├── src/                     # Framework-free core modules
