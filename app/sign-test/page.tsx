@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Download } from 'lucide-react';
 import type { SignDocument } from '@/src/types/sign';
 import {
-  SAMPLE_SIGN_A_NARROW_PARAGRAPH,
-  SAMPLE_SIGN_B_DAMAGE_PRICE_LIST,
-  SAMPLE_SIGN_C_WIFI_HEADLINE,
+  buildSampleSignA,
+  buildSampleSignB,
+  buildSampleSignC,
 } from '@/src/utils/sampleSigns';
 import { composeSignSvg } from '@/src/utils/signComposer';
 
@@ -64,10 +64,10 @@ interface SignCardProps {
   id: string;
   title: string;
   filename: string;
-  doc: SignDocument;
+  buildDoc: () => SignDocument;
 }
 
-function SignCard({ id, title, filename, doc }: SignCardProps) {
+function SignCard({ id, title, filename, buildDoc }: SignCardProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [downloading, setDownloading] = useState(false);
@@ -75,6 +75,7 @@ function SignCard({ id, title, filename, doc }: SignCardProps) {
 
   useEffect(() => {
     let active = true;
+    const doc = buildDoc();
     void composeSignSvg(doc).then((svg) => {
       if (!active) return;
       svgRef.current = svg;
@@ -87,7 +88,7 @@ function SignCard({ id, title, filename, doc }: SignCardProps) {
     return () => {
       active = false;
     };
-  }, [doc]);
+  }, [buildDoc]);
 
   const handleDownload = async () => {
     if (!svgRef.current) return;
@@ -140,12 +141,12 @@ export default function SignTestPage() {
       (window as unknown as Record<string, unknown>).__renderSignToPngBase64 = async (
         signKey: 'a' | 'b' | 'c',
       ): Promise<string> => {
-        const docMap: Record<'a' | 'b' | 'c', SignDocument> = {
-          a: SAMPLE_SIGN_A_NARROW_PARAGRAPH,
-          b: SAMPLE_SIGN_B_DAMAGE_PRICE_LIST,
-          c: SAMPLE_SIGN_C_WIFI_HEADLINE,
+        const builderMap: Record<'a' | 'b' | 'c', () => SignDocument> = {
+          a: buildSampleSignA,
+          b: buildSampleSignB,
+          c: buildSampleSignC,
         };
-        const doc = docMap[signKey];
+        const doc = builderMap[signKey]();
         const svg = await composeSignSvg(doc);
         const blob = await svgToPngBlob(svg, 2480, 3508);
         return new Promise<string>((resolve, reject) => {
@@ -178,19 +179,19 @@ export default function SignTestPage() {
             id="sign-a"
             title="Sample A: Narrow Paragraph"
             filename="sign-a-narrow-paragraph.png"
-            doc={SAMPLE_SIGN_A_NARROW_PARAGRAPH}
+            buildDoc={buildSampleSignA}
           />
           <SignCard
             id="sign-b"
             title="Sample B: 2-Column Damage Price List"
             filename="sign-b-damage-price-list.png"
-            doc={SAMPLE_SIGN_B_DAMAGE_PRICE_LIST}
+            buildDoc={buildSampleSignB}
           />
           <SignCard
             id="sign-c"
             title="Sample C: Wi-Fi with Large Headline"
             filename="sign-c-wifi-headline.png"
-            doc={SAMPLE_SIGN_C_WIFI_HEADLINE}
+            buildDoc={buildSampleSignC}
           />
         </div>
       </div>

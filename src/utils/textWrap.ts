@@ -162,6 +162,26 @@ function computeLines(
   return { lines, maxLineWidthMm };
 }
 
+export interface TextVerticalMetrics {
+  readonly lineStepMm: number;
+  readonly totalHeightMm: number;
+}
+
+/**
+ * Single shared calculation for vertical line step and total text block height.
+ * Both `wrapTextLines` (`totalHeightMm`) and SVG `<tspan>` line positioning (`lineStepMm`)
+ * read `lineHeight` exclusively through this function.
+ */
+export function computeTextVerticalMetrics(
+  fontSizeMm: number,
+  lineHeight: number,
+  lineCount: number,
+): TextVerticalMetrics {
+  const lineStepMm = fontSizeMm * lineHeight;
+  const totalHeightMm = lineCount * lineStepMm;
+  return { lineStepMm, totalHeightMm };
+}
+
 /**
  * Breaks text into lines wrapped within boxWidthMm (applying a 3% safety margin).
  * If shrinkToFit is enabled, iteratively scales fontSizeMm down so that
@@ -200,8 +220,11 @@ export function wrapTextLines(options: WrapTextOptions): WrappedTextResult {
         measureFn,
       );
 
-      const lineStepMm = currentFontSizeMm * lineHeight;
-      const totalHeightMm = lines.length * lineStepMm;
+      const { lineStepMm, totalHeightMm } = computeTextVerticalMetrics(
+        currentFontSizeMm,
+        lineHeight,
+        lines.length,
+      );
 
       const fitsWidth = maxLineWidthMm <= safeBoxWidthMm + 0.01;
       const fitsHeight =
@@ -231,8 +254,11 @@ export function wrapTextLines(options: WrapTextOptions): WrappedTextResult {
     measureFn,
   );
 
-  const lineStepMm = currentFontSizeMm * lineHeight;
-  const totalHeightMm = lines.length * lineStepMm;
+  const { lineStepMm, totalHeightMm } = computeTextVerticalMetrics(
+    currentFontSizeMm,
+    lineHeight,
+    lines.length,
+  );
 
   return {
     lines,

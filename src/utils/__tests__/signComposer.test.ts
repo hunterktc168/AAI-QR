@@ -1,8 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import type { SignDocument } from '../../types/sign';
+import type { SignDocument, TextElement } from '../../types/sign';
 import { getPageDimensions } from '../../types/sign';
-import { composeDocumentSvg, composeSignSvg } from '../signComposer';
-import { measureTextWidthMm, wrapTextLines } from '../textWrap';
+import { getContrastRatio } from '../colorContrast';
+import {
+  buildSampleSignA,
+  buildSampleSignB,
+  buildSampleSignC,
+} from '../sampleSigns';
+import {
+  composeDocumentSvg,
+  composeSignSvg,
+  composeSignSvgWithMetrics,
+} from '../signComposer';
+import { stackElements } from '../signLayout';
+import {
+  computeTextVerticalMetrics,
+  measureTextWidthMm,
+  wrapTextLines,
+} from '../textWrap';
 
 describe('SignDocument Geometry', () => {
   it('computes correct millimetre page dimensions for A4 and A5 orientations', () => {
@@ -319,5 +334,190 @@ describe('Sign SVG Element Rendering & Layer Ordering', () => {
     expect(image).not.toBeNull();
     expect(image?.getAttribute('preserveAspectRatio')).toBe('xMidYMid slice');
     expect(image?.getAttribute('clip-path')).toContain('url(#clip-img-');
+  });
+
+  it('keeps totalHeightMm and rendered <tspan> spacing derived from the same lineHeight (fails if they diverge)', async () => {
+    const lineHeight = 1.65;
+    const fontSize = 6;
+    const doc: SignDocument = {
+      pageSize: 'A4',
+      orientation: 'portrait',
+      background: '#FFFFFF',
+      elements: [
+        {
+          id: 'multi',
+          type: 'text',
+          text: 'Line one\nLine two\nLine three\nLine four',
+          x: 20,
+          y: 25,
+          w: 120,
+          size: fontSize,
+          color: '#0F172A',
+          align: 'left',
+          fontFamily: 'sans',
+          lineHeight,
+        },
+      ],
+    };
+
+    const { svg, elementBounds } = await composeSignSvgWithMetrics(doc);
+    const bounds = elementBounds[0];
+    expect(bounds).toBeDefined();
+
+    const textEl = svg.querySelector('text');
+    expect(textEl).not.toBeNull();
+    const tspans = textEl?.children ?? [];
+    expect(tspans.length).toBe(4);
+
+    const expectedMetrics = computeTextVerticalMetrics(
+      fontSize,
+      lineHeight,
+      tspans.length,
+    );
+    expect(bounds?.height).toBeCloseTo(expectedMetrics.totalHeightMm, 6);
+
+    for (let i = 1; i < tspans.length; i++) {
+      const prevY = Number(tspans[i - 1]?.getAttribute('y'));
+      const currY = Number(tspans[i]?.getAttribute('y'));
+      const actualStep = currY - prevY;
+      expect(actualStep).toBeCloseTo(expectedMetrics.lineStepMm, 6);
+      expect(actualStep * tspans.length).toBeCloseTo(bounds?.height ?? 0, 6);
+    }
+  });
+
+  it('stackElements prevents wrapped multi-line titles from overlapping subsequent elements', async () => {
+    const customMeasure = (t: string) => t.length * 4; // forces wrapping
+    const { elements } = stackElements(
+      20,
+      [
+        {
+          kind: 'element',
+          element: {
+            id: 'title',
+            type: 'text',
+            text: 'Room Inventory & Replacement Price List',
+            x: 20,
+            y: 0,
+            w: 80,
+            size: 9,
+            bold: true,
+            color: '#0F172A',
+            align: 'center',
+            fontFamily: 'sans',
+            lineHeight: 1.2,
+          },
+          gapAfter: 3,
+        },
+        {
+          kind: 'element',
+          element: {
+            id: 'subtitle',
+            type: 'text',
+            text: 'Subtitle placed cleanly underneath',
+            x: 20,
+            y: 0,
+            w: 80,
+            size: 4,
+            color: '#475569',
+            align: 'center',
+            fontFamily: 'sans',
+            lineHeight: 1.3,
+          },
+        },
+      ],
+      customMeasure,
+    );
+
+    const doc: SignDocument = {
+      pageSize: 'A4',
+      orientation: 'portrait',
+      background: '#FFFFFF',
+      elements,
+    };
+
+    const { elementBounds } = await composeSignSvgWithMetrics(doc, {
+      customMeasureFn: customMeasure,
+    });
+    const titleBounds = elementBounds[0];
+    const subtitleBounds = elementBounds[1];
+    expect(titleBounds).toBeDefined();
+    expect(subtitleBounds).toBeDefined();
+    expect(titleBounds!.height).toBeGreaterThan(9 * 1.2); // wrapped to multiple lines
+    expect(subtitleBounds!.y).toBeGreaterThanOrEqual(
+      titleBounds!.y + titleBounds!.height + 3 - 0.001,
+    );
+  });
+
+  it('aligns Sign B sans item labels and mono prices onto identical alphabetic baseline y coordinates', async () => {
+    const doc = buildSampleSignB();
+    const { svg, elementBounds } = await composeSignSvgWithMetrics(doc);
+
+    // Check title and subtitle do not overlap
+    const titleBound = elementBounds[2];
+    const subtitleBound = elementBounds[3];
+    expect(titleBound).toBeDefined();
+    expect(subtitleBound).toBeDefined();
+    expect(subtitleBound!.y).toBeGreaterThanOrEqual(
+      titleBound!.y + titleBound!.height - 0.001,
+    );
+
+    const textEls = svg.querySelectorAll('text');
+    // In buildSampleSignB:
+    // 0: brand, 1: title, 2: subtitle, 3: ITEM DESCRIPTION, 4: REPLACEMENT FEE, 5: items col, 6: prices col, 7: footer
+    const itemsCol = textEls[5];
+    const pricesCol = textEls[6];
+    expect(itemsCol).toBeDefined();
+    expect(pricesCol).toBeDefined();
+    expect(itemsCol?.getAttribute('dominant-baseline')).toBe('alphabetic');
+    expect(pricesCol?.getAttribute('dominant-baseline')).toBe('alphabetic');
+    expect(itemsCol?.getAttribute('font-size')).toBe(
+      pricesCol?.getAttribute('font-size'),
+    );
+
+    const itemSpans = itemsCol?.children ?? [];
+    const priceSpans = pricesCol?.children ?? [];
+    expect(itemSpans.length).toBe(priceSpans.length);
+    for (let i = 0; i < itemSpans.length; i++) {
+      expect(priceSpans[i]?.getAttribute('y')).toBe(
+        itemSpans[i]?.getAttribute('y'),
+      );
+    }
+  });
+
+  it('wraps non-empty QR elements in a group with shape-rendering="crispEdges"', async () => {
+    const doc = buildSampleSignC();
+    const svg = await composeSignSvg(doc);
+    const groups = Array.from(svg.querySelectorAll('g'));
+    const qrGroup = groups.find((g) => g.getAttribute('class') === 'qr-group');
+    expect(qrGroup).toBeDefined();
+    expect(qrGroup?.getAttribute('shape-rendering')).toBe('crispEdges');
+  });
+
+  it('ensures all text colors in sample signs A, B, and C meet >= 4.5:1 contrast on their backgrounds', () => {
+    const checkDocContrast = (
+      doc: SignDocument,
+      getBgForElement: (el: TextElement, index: number) => string,
+    ) => {
+      doc.elements.forEach((el, idx) => {
+        if (el.type === 'text') {
+          const bg = getBgForElement(el, idx);
+          const ratio = getContrastRatio(el.color, bg);
+          expect(ratio).toBeGreaterThanOrEqual(4.5);
+        }
+      });
+    };
+
+    // Sample A: card paragraph is inside #F1F5F9 card, all else on #FFFFFF frame
+    checkDocContrast(buildSampleSignA(), (el) =>
+      el.w === 70 ? '#F1F5F9' : '#FFFFFF',
+    );
+    // Sample B: header row text is #FFFFFF on #0F172A bar, all else on #FFFFFF
+    checkDocContrast(buildSampleSignB(), (el) =>
+      el.color === '#FFFFFF' ? '#0F172A' : '#FFFFFF',
+    );
+    // Sample C: SSID & password card texts (w === 130) sit on #F1F5F9 cards, rest on #FFFFFF
+    checkDocContrast(buildSampleSignC(), (el) =>
+      el.w === 130 ? '#F1F5F9' : '#FFFFFF',
+    );
   });
 });

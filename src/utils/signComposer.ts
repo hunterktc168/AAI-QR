@@ -124,16 +124,80 @@ function createSvgElement<K extends keyof SVGElementTagNameMap>(
   return new HeadlessSvgElement(tag) as unknown as SVGElementTagNameMap[K];
 }
 
+export const BASELINE_OFFSET_RATIO = 0.85;
+
+export interface ElementBounds {
+  readonly index: number;
+  readonly id?: string;
+  readonly type: SignElement['type'];
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface ComposeSignResult {
+  readonly svg: SVGSVGElement;
+  readonly elementBounds: readonly ElementBounds[];
+}
+
 export interface ComposeSignOptions {
   customMeasureFn?: TextMeasureFn;
+}
+
+export function getElementWidthMm(el: SignElement): number {
+  switch (el.type) {
+    case 'text':
+    case 'shape':
+    case 'image':
+      return el.w;
+    case 'qr':
+    case 'icon':
+      return el.size;
+  }
+}
+
+/**
+ * Measures an element's rendered height in millimetres.
+ * For text elements, computes wrapped lines and returns `totalHeightMm`
+ * using the same shared lineHeight calculation as `<tspan>` rendering.
+ */
+export function measureElementHeightMm(
+  el: SignElement,
+  customMeasureFn?: TextMeasureFn,
+): number {
+  switch (el.type) {
+    case 'text': {
+      const { lines, totalHeightMm } = wrapTextLines({
+        text: el.text,
+        boxWidthMm: el.w,
+        fontSizeMm: el.size,
+        fontFamily: el.fontFamily,
+        ...(el.bold !== undefined ? { bold: el.bold } : {}),
+        ...(el.italic !== undefined ? { italic: el.italic } : {}),
+        ...(el.h !== undefined ? { boxHeightMm: el.h } : {}),
+        lineHeight: el.lineHeight,
+        ...(el.shrinkToFit !== undefined ? { shrinkToFit: el.shrinkToFit } : {}),
+        ...(customMeasureFn ? { measureFn: customMeasureFn } : {}),
+      });
+      return lines.length === 0 ? 0 : totalHeightMm;
+    }
+    case 'shape':
+      return el.kind === 'line' ? Math.abs(el.h) : el.h;
+    case 'image':
+      return el.h;
+    case 'qr':
+    case 'icon':
+      return el.size;
+  }
 }
 
 function renderTextElement(
   masterSvg: SVGSVGElement,
   el: TextElement,
   customMeasureFn?: TextMeasureFn,
-): void {
-  const { lines, fontSizeMm, lineStepMm } = wrapTextLines({
+): number {
+  const { lines, fontSizeMm, lineStepMm, totalHeightMm } = wrapTextLines({
     text: el.text,
     boxWidthMm: el.w,
     fontSizeMm: el.size,
@@ -147,7 +211,7 @@ function renderTextElement(
   });
 
   if (lines.length === 0) {
-    return;
+    return 0;
   }
 
   const textEl = createSvgElement('text');
@@ -169,18 +233,21 @@ function renderTextElement(
   textEl.setAttribute('font-style', el.italic ? 'italic' : 'normal');
   textEl.setAttribute('text-decoration', el.underline ? 'underline' : 'none');
   textEl.setAttribute('text-anchor', textAnchor);
-  textEl.setAttribute('dominant-baseline', 'hanging');
+  textEl.setAttribute('dominant-baseline', 'alphabetic');
+
+  const firstBaselineY = el.y + fontSizeMm * BASELINE_OFFSET_RATIO;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i] ?? '';
     const tspan = createSvgElement('tspan');
     tspan.setAttribute('x', String(anchorX));
-    tspan.setAttribute('y', String(el.y + i * lineStepMm));
+    tspan.setAttribute('y', String(firstBaselineY + i * lineStepMm));
     tspan.textContent = line;
     textEl.appendChild(tspan);
   }
 
   masterSvg.appendChild(textEl);
+  return totalHeightMm;
 }
 
 function renderShapeElement(
@@ -365,7 +432,12 @@ async function renderQRElement(
       qrSvg.setAttribute('width', String(el.size));
       qrSvg.setAttribute('height', String(el.size));
       qrSvg.setAttribute('viewBox', `0 0 ${internalPx} ${internalPx}`);
-      masterSvg.appendChild(qrSvg);
+
+      const qrGroup = createSvgElement('g');
+      qrGroup.setAttribute('class', 'qr-group');
+      qrGroup.setAttribute('shape-rendering', 'crispEdges');
+      qrGroup.appendChild(qrSvg);
+      masterSvg.appendChild(qrGroup);
       return;
     }
   }
@@ -392,27 +464,31 @@ async function renderQRElement(
   qrBox.setAttribute('fill', el.style.fgColor);
   headlessQr.appendChild(qrBox);
 
-  masterSvg.appendChild(headlessQr);
+  const qrGroup = createSvgElement('g');
+  qrGroup.setAttribute('class', 'qr-group');
+  qrGroup.setAttribute('shape-rendering', 'crispEdges');
+  qrGroup.appendChild(headlessQr);
+  masterSvg.appendChild(qrGroup);
 }
 
-function renderElement(
+async function renderElement(
   masterSvg: SVGSVGElement,
   el: SignElement,
   index: number,
   customMeasureFn?: TextMeasureFn,
-): Promise<void> | void {
+): Promise<number> {
   switch (el.type) {
     case 'text':
-      renderTextElement(masterSvg, el, customMeasureFn);
-      break;
+      return renderTextElement(masterSvg, el, customMeasureFn);
     case 'shape':
       renderShapeElement(masterSvg, el);
-      break;
+      return measureElementHeightMm(el, customMeasureFn);
     case 'image':
       renderImageElement(masterSvg, el, index);
-      break;
+      return measureElementHeightMm(el, customMeasureFn);
     case 'qr':
-      return renderQRElement(masterSvg, el);
+      await renderQRElement(masterSvg, el);
+      return el.size;
     case 'icon': {
       const g = createSvgElement('g');
       g.setAttribute('data-icon', el.name);
@@ -427,19 +503,19 @@ function renderElement(
       iconText.textContent = `[${el.name}]`;
       g.appendChild(iconText);
       masterSvg.appendChild(g);
-      break;
+      return el.size;
     }
   }
 }
 
 /**
- * Composes a full SignDocument into an SVGSVGElement with millimeter dimensions and viewBox.
+ * Composes a full SignDocument into an SVGSVGElement and returns measured element bounds (in mm).
  * Elements are rendered in array order so later elements draw on top.
  */
-export async function composeSignSvg(
+export async function composeSignSvgWithMetrics(
   doc: SignDocument,
   options?: ComposeSignOptions,
-): Promise<SVGSVGElement> {
+): Promise<ComposeSignResult> {
   const dims: PageDimensions = getPageDimensions(doc.pageSize, doc.orientation);
   const masterSvg = createSvgElement('svg');
 
@@ -458,15 +534,43 @@ export async function composeSignSvg(
   bgRect.setAttribute('fill', doc.background);
   masterSvg.appendChild(bgRect);
 
+  const elementBounds: ElementBounds[] = [];
+
   // Render elements sequentially to preserve z-index layer ordering
   for (let i = 0; i < doc.elements.length; i++) {
     const el = doc.elements[i];
     if (el) {
-      await renderElement(masterSvg, el, i, options?.customMeasureFn);
+      const height = await renderElement(
+        masterSvg,
+        el,
+        i,
+        options?.customMeasureFn,
+      );
+      elementBounds.push({
+        index: i,
+        ...(el.id !== undefined ? { id: el.id } : {}),
+        type: el.type,
+        x: el.x,
+        y: el.y,
+        width: getElementWidthMm(el),
+        height,
+      });
     }
   }
 
-  return masterSvg;
+  return { svg: masterSvg, elementBounds };
+}
+
+/**
+ * Composes a full SignDocument into an SVGSVGElement with millimeter dimensions and viewBox.
+ * Elements are rendered in array order so later elements draw on top.
+ */
+export async function composeSignSvg(
+  doc: SignDocument,
+  options?: ComposeSignOptions,
+): Promise<SVGSVGElement> {
+  const { svg } = await composeSignSvgWithMetrics(doc, options);
+  return svg;
 }
 
 /**
